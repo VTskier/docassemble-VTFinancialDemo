@@ -10,6 +10,7 @@ mandatory: True
 code: |
   if employed:
     jobs.gather()
+    #need to add x.which_tips_commissions and x.employer_paid_expenses, as appropriate
     review_jobs
   else:
     why_unemployed
@@ -20,7 +21,6 @@ code: |
 id: job review
 question: |
   Are you employed?
-  
 fields:
   - Are you employed?: employed
     datatype: yesnoradio
@@ -86,22 +86,21 @@ fields:
 #Brainstorm gathering code for generic tip_commissions - how much and how often
 
 ---      
-id: 
+id: Employer paid expenses
 generic object: ALItemizedJob
 question: |
     Tell us about these.
 fields:      
-      
+    - Which of these do you have: x.employer_paid_expenses
+      datatype: checkboxes
+      choices:
+        - Cell phone: phone
+        - Car: car
+        - Housing: housing
     - How much does your employer pay for cars, housing, etc.? (Q4): x.to_add['employer_paid_expenses'].value
       datatype: currency
       required: False
     
----    
-#  
-#  - Do you have other income like tips?: 
-#    datatype: yesnoradio
-#  - Do you have other income like cell phone, car, housing allowance?: 
-#    datatype: yesnoradio
 ---
 id: job review
 question: |

@@ -46,7 +46,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.VTFinancialDemo',
       version='0.0.1',
       description=('A docassemble extension.'),
-      long_description='# docassemble.VTFinancialDemo\n\nA docassemble extension.\n\n## Author\n\nKris Surette, ksurette@lawlinevt.org\n\n',
+      long_description='# docassemble.VTFinancialDemo\r\n\r\nA docassemble extension.\r\n\r\n## Author\r\n\r\nKris Surette, ksurette@lawlinevt.org\r\n\r\n',
       long_description_content_type='text/markdown',
       author='Kris Surette',
       author_email='ksurette@lawlinevt.org',
