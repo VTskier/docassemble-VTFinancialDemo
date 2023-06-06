@@ -1,0 +1,184 @@
+---
+include:
+  - docassemble.ALToolbox:al_income.yml
+---
+objects:
+  - jobs: ALItemizedJobList.using(complete_attribute='complete', ask_number=True)
+---
+id: interview order
+mandatory: True
+code: |
+  if employed:
+    jobs.gather()
+    review_jobs
+  else:
+    why_unemployed
+  improved_final_screen
+    
+
+---
+id: job review
+question: |
+  Are you employed?
+  
+fields:
+  - Are you employed?: employed
+    datatype: yesnoradio
+  - I am currently unemployed because: why_unemployed
+    hide if: employed
+---
+id: LSV itemized job line items
+generic object: ALItemizedJob
+question: |
+    Enter info from your paystub for your job as a ${ x.source }
+fields:
+    - label: |
+        % if x.is_hourly:
+        What is your hourly pay for this job?
+        % else:
+        What are your wages for this job?
+        % endif
+      field: x.to_add['full time'].value
+      datatype: currency
+      show if:
+        code: x.is_part_time is False
+    - label: |
+        % if x.is_hourly:
+        What is your hourly pay for this job?
+        % else:
+        What are your wages for this job?
+        % endif
+      field: x.to_add['part time'].value
+      datatype: currency
+      show if:
+        code: x.is_part_time is True
+
+    - What is your federal tax amount?: x.to_subtract['federal_taxes'].value
+      datatype: currency
+      required: False
+    - What do you pay for insurance?: x.to_subtract['insurance'].value
+      datatype: currency
+      required: False
+    - Do you have income from tips, commissions, bonuses, royalties?: x.has_tips_commissions
+      datatype: yesnoradio
+    - Does your employer pay for cars, housing, etc.?: x.has_employer_paid_expenses
+      datatype: yesnoradio
+    - Does the job have other deductions?: x.to_subtract.there_is_another
+      datatype: yesnoradio
+    
+---
+id: Tips and commissions
+generic object: ALItemizedJob
+question: |
+    Tell us about these.
+fields:
+    - Which of these do you have: x.which_tips_commissions
+      datatype: checkboxes
+      choices:
+        - Tips: tips
+        - Commissions: commissions
+        - Bonuses: bonuses
+        - Royalties: royalties
+    - How much do you get in tips, commissions, bonuses, royalties? (Q2): x.to_add['tips_commissions'].value
+      datatype: currency
+      required: False
+---
+#Brainstorm gathering code for generic tip_commissions - how much and how often
+
+---      
+id: 
+generic object: ALItemizedJob
+question: |
+    Tell us about these.
+fields:      
+      
+    - How much does your employer pay for cars, housing, etc.? (Q4): x.to_add['employer_paid_expenses'].value
+      datatype: currency
+      required: False
+    
+---    
+#  
+#  - Do you have other income like tips?: 
+#    datatype: yesnoradio
+#  - Do you have other income like cell phone, car, housing allowance?: 
+#    datatype: yesnoradio
+---
+id: job review
+question: |
+  Review your jobs
+subquestion: |
+  Here is what you've told us about your jobs. You can add more or continue
+  to the next question.
+
+  ${ jobs.table }
+
+  ${ jobs.add_action() }
+field: review_jobs
+---
+#review:
+#  - Edit: jobs.revisit
+#    button: |
+#      **Jobs**:
+#
+#      % for job in jobs:
+#      * ${ job.source } at ${ job.employer.name }
+#      % endfor
+---
+event: final_screen
+question: Summary of your jobs
+subquestion: |
+  All of itemized value names, which we call "sources": ${ jobs.sources() }
+
+  Itemized deduction names: ${ jobs.sources(which_side="deductions")}
+
+  Itemized income names: ${ jobs.sources(which_side="incomes") }
+
+  Annual gross income from all jobs: ${ currency(jobs.total()) }
+
+  Annual net income (gross - deductions) from all jobs: ${ currency(jobs.net_total()) }
+
+  Monthly gross income from all jobs: ${ currency(jobs.total(times_per_year=12)) }
+
+  Annual gross income from the first job listed: ${ currency(jobs[0].total()) }
+
+  Employer information from the first job: ${ jobs[0].employer_name_address_phone() }
+---
+event: improved_final_screen
+question: Summary of your jobs
+subquestion: |
+  % if not employed:
+  I am unemployed: ${employed} because ${ why_unemployed }
+  
+  % else:
+  Employer name and address:
+  
+    ${ jobs[0].employer_name_address_phone() }
+    
+  Second employer:
+  
+    ${ jobs[1].employer_name_address_phone() }
+    
+  Other employers:
+  
+    % for job in jobs[2:]:
+    * ${ job.employer_name_address_phone() }
+    % endfor
+    
+  I am self-employed: NA at unknown company
+  
+  I have included overtime: ${ True }
+  
+  My monthly gross income excluding self-employed jobs (Q1. Salary or wages): ${ currency(jobs.total(source=["full time","part time"],times_per_year=12)) }
+
+  Tips, commissions, bonuses, royalties: ${ currency(jobs.total(source=["tips_commissions"],times_per_year=12)) }
+  
+  Self-employment income: Attach Sched C or result from page 11 - gross monthly
+  
+  Personal expenses paid by employer:   ${ currency(jobs.total(source=["employer_paid_expenses"],times_per_year=12)) }
+  
+
+  % endif
+  
+  
+
+
