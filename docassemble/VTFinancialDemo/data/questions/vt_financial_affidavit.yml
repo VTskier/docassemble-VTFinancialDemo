@@ -9,20 +9,85 @@ objects:
   - jobs: ALItemizedJobList.using(complete_attribute='complete', ask_number=True)
   - other_incomes: ALIncomeList
 ---
+objects:
+  - jobs[i].employer_paid_expenses: ALExpenseList
+---
 id: interview order
 mandatory: True
 code: |
   if employed:
     jobs.gather()
     #need to add x.which_tips_commissions and x.employer_paid_expenses, as appropriate
+    temp_ep_exp
     review_jobs
 
   else:
     why_unemployed
+    
   if other_incomes.selected_types.any_true():
     other_incomes.there_are_any = True
     other_incomes.gathered
+  
   improved_final_screen
+---
+generic object: ALItemizedJob
+code: |
+  x.employer_paid_expenses.gather()
+  x.complete = True
+  #x.source
+  #x.is_self_employed
+  ## NOTE: if `is_self_employed`, you need to set this yourself
+  #x.employer.name.first
+  #x.times_per_year
+  #x.to_add.complete_attribute = 'complete'
+  #x.to_subtract.complete_attribute = 'complete'
+  #if x.is_part_time:
+  #  x.to_add["part time"].is_hourly = x.is_hourly
+  #else:
+  #  x.to_add["full time"].is_hourly = x.is_hourly
+  #x.to_add.gather()
+  #x.to_subtract.gather()
+  #x.complete = True
+---
+id: does employer pay expenses
+question: Employer paid expenses for for your ${ jobs[i].source } job
+fields:
+  - Does your employer pay for any expenses?: jobs[i].employer_paid_expenses.there_are_any
+    datatype: yesnoradio
+---
+id: expense information
+question: |
+  How much does your employer pay for your expenses for your ${ jobs[i].source }?
+fields: 
+  - Type of expense: jobs[i].employer_paid_expenses[j].source
+    code: |
+      expense_terms_ordered
+  - Other (explain): jobs[i].employer_paid_expenses[j].source
+    show if:
+      variable: jobs[i].employer_paid_expenses[j].source
+      is: other
+  - Amount: jobs[i].employer_paid_expenses[j].value
+    datatype: currency
+  - How often do you pay this amount?: jobs[i].employer_paid_expenses[j].times_per_year
+    default: 12
+    code: |
+      times_per_year_for_expenses
+---
+id: are there more employer pay expenses
+question: Does your employer pay for other expenses for ${ jobs[i].source }?
+subquestion: |
+  % if jobs[i].employer_paid_expenses.number_gathered() > 0:
+  You've already told us about **${ comma_and_list( [an_expense.source for an_expense in jobs[i].employer_paid_expenses.complete_elements()] ) }**.
+  % endif
+fields:
+  - Does your employer pay for any other expenses for this job?: jobs[i].employer_paid_expenses.there_is_another
+    datatype: yesnoradio
+---
+id: temp emp exp
+continue button field: temp_ep_exp
+question: Yeah
+subquestion: |
+  ${ sum([ expense.total() for expense in [ job.employer_paid_expenses for job in jobs ] ]) }
 ---
 id: Are there other incomes
 question: |
@@ -158,7 +223,6 @@ fields:
 ---
 objects:
   - other_employer_paid_expenses: DAObject.using(complete_attribute='value')
-  
 ---
 #id: Other employer paid expenses
 #generic object: ALItemizedJob
@@ -303,7 +367,7 @@ subquestion: |
   
   My monthly gross income excluding self-employed jobs (Q1. Salary or wages): ${ currency(jobs.total(source=["full time","part time"],times_per_year=12)) }
 
-
+  My employer paid expenses add up to yearly: ${ sum([ expense.total() for expense in [ job.employer_paid_expenses for job in jobs ] ]) }
  
 
   % endif
