@@ -1,4 +1,3 @@
-
 ---
 include:
   - docassemble.ALToolbox:al_income.yml
@@ -7,6 +6,9 @@ include:
 objects:
   - jobs: ALItemizedJobList.using(complete_attribute='complete', ask_number=True)
   - other_incomes: ALIncomeList
+  - house_expenses_paid_by_user: ALExpenseList
+  - house_expenses_paid_by_other: ALExpenseList
+  - house_expenses_total: ALExpenseList
 ---
 objects:
   - jobs[i].employer_paid_expenses: ALIncomeList
@@ -14,6 +16,8 @@ objects:
 id: interview order
 mandatory: True
 code: |
+  house_expenses_total.gather()
+  expense_summary
   if employed:
     jobs.gather()
     #need to add x.which_tips_commissions
@@ -116,7 +120,8 @@ fields:
     datatype: yesnoradio
   - I am currently unemployed because: why_unemployed
     hide if: employed
-   
+---
+#Brainstorm gathering code for generic tip_commissions - how much and how often   
 ---
 id: Tips and commissions
 generic object: ALItemizedJob
@@ -134,7 +139,62 @@ fields:
       datatype: currency
       required: False
 ---
-#Brainstorm gathering code for generic tip_commissions - how much and how often   
+id: expenses
+generic object: ALExpenseList
+question: Do you have any ${ x.name } expenses?
+fields:
+  - Do you have any ${ x.name } expenses?: x.there_are_any
+    datatype: yesnoradio
+---
+code: |
+  house_expenses_total.name = "household"
+  house_expenses_total.choices = ["rent","heat","phone"]
+---
+
+---
+code: |
+  house_expenses_paid_by_other.name = house_expenses_total.name
+  for index, expense in house_expenses_total.enumerate():
+    house_expenses_paid_by_other[index].source = expense.source
+    house_expenses_paid_by_other[index].
+---
+id: expense information
+generic object: ALExpenseList
+question: |
+  What are your ${ x.name } expenses?
+fields: 
+  - Type of expense: x[i].source
+    code: |
+      x.choices
+  - Other (explain): x[i].source
+    show if:
+      variable: x[i].source
+      is: other
+  - Amount: x[i].value
+    datatype: currency
+  - How often do you pay this amount?: x[i].times_per_year
+    default: 12
+    code: |
+      times_per_year_for_expenses
+---
+id: are there more expenses
+generic object: ALExpenseList
+question: Do you have other ${ x.name } expenses?
+subquestion: |
+  % if x.number_gathered() > 0:
+  You've already told us about **${ comma_and_list( [an_expense.source for an_expense in x.complete_elements()] ) }**.
+  % endif
+fields:
+  - Is there another expense?: x.there_is_another
+    datatype: yesnoradio
+---
+id: expense summary
+continue button field: expense_summary
+question: |
+  Your expenses
+subquestion: |
+  Your household expenses are:
+  ${ currency(house_expenses_total.total()) }
 ---
 id: job review
 question: |
