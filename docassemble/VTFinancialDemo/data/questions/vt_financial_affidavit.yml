@@ -1,4 +1,3 @@
-# need to work on employer paid expenses
 
 ---
 include:
@@ -17,7 +16,7 @@ mandatory: True
 code: |
   if employed:
     jobs.gather()
-    #need to add x.which_tips_commissions and x.employer_paid_expenses, as appropriate
+    #need to add x.which_tips_commissions
     review_jobs
 
   else:
@@ -109,22 +108,6 @@ fields:
   - Amount of income: x[i].value
     datatype: currency
 ---
-#generic object: ALItemizedJob
-#code: |
-#  x.to_add[i].value
-#  x.to_add[i]
-#  x.to_add[i].complete = True
----
-#id: there is another income
-#generic object: ALItemizedJob
-#question: |
-#  Do you have any other incomes from that job?
-#fields:
-#  - Have another: x.to_add.there_is_another
-#    datatype: yesnoradio
-  
-
----
 id: job review
 question: |
   Are you employed?
@@ -133,48 +116,7 @@ fields:
     datatype: yesnoradio
   - I am currently unemployed because: why_unemployed
     hide if: employed
----
-#id: LSV itemized job line items
-#generic object: ALItemizedJob
-#question: |
-#    Enter info from your paystub for your job as a ${ x.source }
-#fields:
-#    - label: |
-#        % if x.is_hourly:
-#        What is your hourly pay for this job?
-#        % else:
-#        What are your wages for this job?
-#        % endif
-#      field: x.to_add['full time'].value
-#      datatype: currency
-#      show if:
-#        code: x.is_part_time is False
-#    - label: |
-#        % if x.is_hourly:
-#        What is your hourly pay for this job?
-#        % else:
-#        What are your wages for this job?
-#        % endif
-#      field: x.to_add['part time'].value
-#      datatype: currency
-#      show if:
-#        code: x.is_part_time is True
-#
-#    - What is your federal tax amount?: x.to_subtract['federal_taxes'].value
-#      datatype: currency
-#      required: False
-#    - What do you pay for insurance?: x.to_subtract['insurance'].value
-#      datatype: currency
-#      required: False
-#    #- Do you have income from tips, commissions, bonuses, royalties?: x.has_tips_commissions
-#    #  datatype: yesnoradio
-#    #- Does your employer pay for cars, housing, etc.?: x.has_employer_paid_expenses
-#    #  datatype: yesnoradio
-#    - Does the job have other incomes?: x.to_add.there_is_another
-#      datatype: yesnoradio
-#    - Does the job have other deductions?: x.to_subtract.there_is_another
-#      datatype: yesnoradio
-    
+   
 ---
 id: Tips and commissions
 generic object: ALItemizedJob
@@ -192,104 +134,7 @@ fields:
       datatype: currency
       required: False
 ---
-#Brainstorm gathering code for generic tip_commissions - how much and how often
----
-objects:
-  - employer_paid_expenses: DAList
----      
-id: Improved employer paid expenses
-question: |
-    Tell us about these expenses paid by your employer
-fields:  
-  - Which of these do you have: which_employer_paid_expenses
-    datatype: checkboxes
-    choices:
-      - Cell phone: phone
-      - Car: car
-      - Housing: housing
-  - How much does your employer pay for cars, housing, etc.? (Q4): employer_paid_expenses[i]
-    datatype: currency
-    required: False
-  - Does your employer pay for any other personal expense?: employer_paid_expenses.there_is_another
-    datatype: yesnoradio
----
-objects:
-  - other_employer_paid_expenses: DAObject.using(complete_attribute='value')
----
-#id: Other employer paid expenses
-#generic object: ALItemizedJob
-#question: |
-#    Tell us about another expense paid by your employer
-#fields:
-#  - What is the name of this expense?: other_employer_paid_expenses.name
-#  - How often do they pay this?: other_employer_paid_expenses.times_per_year
-#    code: |
-#      times_per_year_list
-#    datatype: integer   
-#  - How much did they pay for this?: other_employer_paid_expenses.value
-#    datatype: currency
-#  - note: |
-#      If the cost varies, give an average amount.
-#  - Does your employer pay for any other personal expense?: x.to_add.there_is_another
-#    datatype: yesnoradio
-
-
-
----
-#id: Employer paid expenses
-#generic object: ALItemizedJob
-#question: |
-#    Tell us about these expenses paid by your employer
-#fields:      
-#    - Which of these do you have: x.which_employer_paid_expenses
-#      datatype: checkboxes
-#      choices:
-#        - Cell phone: phone
-#        - Car: car
-#        - Housing: housing
-#    - How much does your employer pay for cars, housing, etc.? (Q4): x.to_add['employer_paid_expenses'].value
-#      datatype: currency
-#      required: False
-#    - Does your employer pay for any other personal expense?: x.to_add.there_is_another
-#      datatype: yesnoradio
-    
----
-#id: Are there more employer paid expenses
-#generic object: ALItemizedJob
-#question: |
-#    Tell us about the other employer-paid expenses
-#fields:      
-#  - Do you have another expense paid by your employer?: x.to_add.there_is_another
-#    datatype: yesnoradio
-    
----
-#id: Other employer paid expense
-#generic object: ALItemizedJob
-#question: |
-#  Other employer-paid expense
-##subquestion: |
-##  You have already told us about your income from **${comma_and_list( [job_items_names.get(key, key).lower() for key in x.to_add.complete_elements().keys()] )}**.
-#fields:
-#  - Type of income: x.to_add.new_item_name
-#validation code: |
-#  if x.to_add.new_item_name in x.to_add.complete_elements().keys():
-#    validation_error(f'You already told us about your <strong>{ job_items_names.get(x.to_add.new_item_name, x.to_add.new_item_name) }</strong> that pays { currency( x.to_add[ x.to_add.new_item_name ].value )}. Pick a different name.')
----
-#id: other itemized employer paid expense
-#generic object: ALItemizedJob
-#question: |
-#  How much does your employer pay you for ${ job_items_names.get(i, i) }?
-#fields:
-#  - Amount: x.to_add[i].value
-#    datatype: currency
-#  - How often do you get paid this amount?: x.to_add[i].times_per_year
-#    input type: radio
-#    code: |
-#      times_per_year_list
-#    datatype: integer
-#  - Does your employer pay for any personal expenses?: x.to_add.there_is_another
-#    datatype: yesnoradio
-    
+#Brainstorm gathering code for generic tip_commissions - how much and how often   
 ---
 id: job review
 question: |
@@ -302,35 +147,6 @@ subquestion: |
 
   ${ jobs.add_action() }
 field: review_jobs
----
-#review:
-#  - Edit: jobs.revisit
-#    button: |
-#      **Jobs**:
-#
-#      % for job in jobs:
-#      * ${ job.source } at ${ job.employer.name }
-#      % endfor
----
-#event: final_screen
-#question: Summary of your jobs
-#subquestion: |
-#  All of itemized value names, which we call "sources": ${ jobs.sources() }
-#
-#  Itemized deduction names: ${ jobs.sources(which_side="deductions")}
-#
-#  Itemized income names: ${ jobs.sources(which_side="incomes") }
-#
-#  Annual gross income from all jobs: ${ currency(jobs.total()) }
-#
-#  Annual net income (gross - deductions) from all jobs: ${ currency(jobs.net_total()) }
-#
-#  Monthly gross income from all jobs: ${ currency(jobs.total(times_per_year=12)) }
-#
-#  Annual gross income from the first job listed: ${ currency(jobs[0].total()) }
-#
-#  Employer information from the first job: ${ jobs[0].employer_name_address_phone() }
-#
 ---
 event: improved_final_screen
 question: Summary of your jobs
@@ -359,43 +175,5 @@ subquestion: |
 #  Tips, commissions, bonuses, royalties: ${ currency(jobs.total(source=["tips_commissions"],times_per_year=12)) }
   
 #  Self-employment income: Attach Sched C or result from page 11 - gross monthly
-
-#  Personal expenses paid by employer:   ${ currency(jobs.total(exclude_source=["full time","part time","tips_commissions"],times_per_year=12)) } 
-
+  
 ---
-generic object: ALItemizedJob
-code: |
----
-#generic object: ALItemizedJob
-#code: |
-#  x.source
-#  x.is_self_employed
-#  # NOTE: if `is_self_employed`, you need to set this yourself
-#  x.employer.name.first
-#  x.times_per_year
-#  #x.to_add.complete_attribute = 'complete'
-#  #x.to_subtract.complete_attribute = 'complete'
-#  if x.is_part_time:
-#    x.to_add["part time"].is_hourly = x.is_hourly
-#  else:
-#    x.to_add["full time"].is_hourly = x.is_hourly
-
-
-
-
-
-#  #if x.has_tips_commissions:
-#  #  x.which_tips_commissions
-#  #  
-#  #if x.has_employer_paid_expenses:
-#  #  x.which_employer_paid_expenses
-#  #  x.to_add.there_are_any = True
-#  #else: 
-#  #  x.to_add.there_are_any = False
-#  x.to_add.gather()
-#  x.to_subtract.gather()
-#  x.complete = True
-   
----
-
-
