@@ -10,7 +10,7 @@ objects:
   - other_incomes: ALIncomeList
 ---
 objects:
-  - jobs[i].employer_paid_expenses: ALExpenseList
+  - jobs[i].employer_paid_expenses: ALIncomeList
 ---
 id: interview order
 mandatory: True
@@ -18,7 +18,6 @@ code: |
   if employed:
     jobs.gather()
     #need to add x.which_tips_commissions and x.employer_paid_expenses, as appropriate
-    temp_ep_exp
     review_jobs
 
   else:
@@ -32,22 +31,21 @@ code: |
 ---
 generic object: ALItemizedJob
 code: |
+  x.source
+  x.is_self_employed
+  # NOTE: if `is_self_employed`, you need to set this yourself
+  x.employer.name.first
+  x.times_per_year
+  x.to_add.complete_attribute = 'complete'
+  x.to_subtract.complete_attribute = 'complete'
+  if x.is_part_time:
+    x.to_add["part time"].is_hourly = x.is_hourly
+  else:
+    x.to_add["full time"].is_hourly = x.is_hourly
+  x.to_add.gather()
+  x.to_subtract.gather()
   x.employer_paid_expenses.gather()
   x.complete = True
-  #x.source
-  #x.is_self_employed
-  ## NOTE: if `is_self_employed`, you need to set this yourself
-  #x.employer.name.first
-  #x.times_per_year
-  #x.to_add.complete_attribute = 'complete'
-  #x.to_subtract.complete_attribute = 'complete'
-  #if x.is_part_time:
-  #  x.to_add["part time"].is_hourly = x.is_hourly
-  #else:
-  #  x.to_add["full time"].is_hourly = x.is_hourly
-  #x.to_add.gather()
-  #x.to_subtract.gather()
-  #x.complete = True
 ---
 id: does employer pay expenses
 question: Employer paid expenses for for your ${ jobs[i].source } job
@@ -82,12 +80,6 @@ subquestion: |
 fields:
   - Does your employer pay for any other expenses for this job?: jobs[i].employer_paid_expenses.there_is_another
     datatype: yesnoradio
----
-id: temp emp exp
-continue button field: temp_ep_exp
-question: Yeah
-subquestion: |
-  ${ sum([ expense.total() for expense in [ job.employer_paid_expenses for job in jobs ] ]) }
 ---
 id: Are there other incomes
 question: |
@@ -353,21 +345,14 @@ subquestion: |
     
   Second employer:
   
-    ${ jobs[1].employer_name_address_phone() }
-    
-  Other employers:
-  
-    % for job in jobs[2:]:
-    * ${ job.employer_name_address_phone() }
-    % endfor
-    
+
   I am self-employed: NA at unknown company
   
   I have included overtime: ${ True }
   
   My monthly gross income excluding self-employed jobs (Q1. Salary or wages): ${ currency(jobs.total(source=["full time","part time"],times_per_year=12)) }
 
-  My employer paid expenses add up to yearly: ${ sum([ expense.total() for expense in [ job.employer_paid_expenses for job in jobs ] ]) }
+  My employer paid expenses add up to: ${ currency(sum([ expense.total(times_per_year=12) for expense in [ job.employer_paid_expenses for job in jobs ] ])) }
  
 
   % endif
