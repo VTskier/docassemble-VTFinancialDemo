@@ -136,20 +136,6 @@ fields:
       datatype: currency
       required: False
 ---
-# How many states deal with this 3-column problem?
-# Note: An alternative (to allow us to use a different/more sensical data structure) may be to subclass and create an income/expense that can have multiple amounts with multiple owners. Or I could create a function to make those calculations.
----
-## brainstorm
----
-#code: |
-#  house_expenses.gather()
-#---
-#code: |
-#  house_expenses[i].whole_expense.value
-#  if house_expenses[i].has_partial:
-#    house_expenses[i].partial_expense.value
-#  house_expenses[i].complete = True
----
 # Generic expense gathering
 ---
 objects:
@@ -183,7 +169,6 @@ code: |
     x.paid_by_other[i].value
   else:
     x.paid_by_other[i].value = '0'
-  # TODO: Somehow exclude items that the person has already selected from being listed
   if len(x.choices) <= len(x.totals.sources()):
     x.totals.there_is_another = False
   x.totals[i].complete = True
@@ -198,16 +183,14 @@ fields:
 # TODO: For choices, somehow exclude items that the person has already selected
 id: expense information
 generic object: DAObject
+# This title should depend on whether they've already given some expenses
 question: |
   What is one ${ x.name } expense?
 fields: 
+  # Change this to a checklist
   - Type of expense: x.totals[i].source
     code: |
       [ choice for choice in x.choices if choice[0] not in x.totals.sources() ]
-  #- Other (explain): x.totals[i].source
-  #  show if:
-  #    variable: x.totals[i].source
-  #    is: other
   - Amount: x.totals[i].value
     datatype: currency
     min: 0
@@ -222,7 +205,8 @@ fields:
 ---
 id: expense paid by other
 generic object: DAObject
-question: How much do other people help pay for ${ x.name } ${ times_per_year(times_per_year_list, x.totals[i].times_per_year) }?
+# For translation, .source would actually be more complicated code
+question: How much do other people help pay for ${ x.totals[i].source } ${ times_per_year(times_per_year_list, x.totals[i].times_per_year) }?
 fields:
   - Amount: x.paid_by_other[i].value
     datatype: currency
