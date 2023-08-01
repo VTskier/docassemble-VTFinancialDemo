@@ -6,9 +6,6 @@ include:
 objects:
   - jobs: ALItemizedJobList.using(complete_attribute='complete', ask_number=True)
   - other_incomes: ALIncomeList
-  #- house_expenses_paid_by_user: ALExpenseList
-  #- house_expenses_totals: ALExpenseList.using(complete_attribute='complete')
-  #- house_expenses_paid_by_other: ALExpenseList.using(complete_attribute='complete')
 ---
 objects:
   - jobs[i].employer_paid_expenses: ALIncomeList
@@ -16,14 +13,6 @@ objects:
 id: interview order
 mandatory: True
 code: |
-  #house_expenses_totals.gather()
-  #if not house_expenses_totals.there_are_any:
-  #  house_expenses_paid_by_other.there_are_any = False
-  #else:
-  #  # We gathered this info while we were getting the totals
-  #  house_expenses_paid_by_other.there_is_another = False
-  #expense_summary
-  
   house_expenses_table.totals.gather()
   generic_expense_summary
   
@@ -241,9 +230,8 @@ fields:
     max: ${ x.totals[i].value }
     validation messages:
       min: The amount must be more than ${ currency(0) }
-      max: The amount must be equal to or less than ${ currency( x.totals[i].value ) }
+      max: The amount must be equal to or less than ${ currency( x.totals[i].value )}
 ---
-# TODO: Only show if not all expense categories have been used
 id: are there more expenses
 generic object: DAObject
 question: Do you have other ${ x.name } expenses?
@@ -292,122 +280,6 @@ subquestion: |
   * Phone: ${ house_expenses_table.totals.total(source=["phone"], times_per_year=12) - house_expenses_table.paid_by_other.total(source=["phone"], times_per_year=12) }
   
   **Total you pay:** ${ house_expenses_table.totals.total(times_per_year=12) - house_expenses_table.paid_by_other.total(times_per_year=12) }
-  
-  % else:
-  You have no household expenses.
-  % endif
----
-# Non-generic expense gathering
----
-code: |
-  house_expenses_totals[i].value
-  # We get house_expenses_paid_by_other values at the same time
-  house_expenses_paid_by_other[i].source = house_expenses_totals[i].source
-  house_expenses_paid_by_other[i].times_per_year = house_expenses_totals[i].times_per_year
-  if house_expenses_totals[i].portion_is_paid_by_other:
-    house_expenses_paid_by_other.there_are_any = True
-    house_expenses_paid_by_other[i].max = house_expenses_totals[i].value
-    house_expenses_paid_by_other[i].get_other_value
-  else:
-    house_expenses_paid_by_other[i].value = '0'
-  # TODO: Somehow exclude items that the person has already selected
-  house_expenses_paid_by_other[i].complete = True
-  house_expenses_totals[i].complete = True
----
-code: |
-  house_expenses_totals.name = "household"
-  house_expenses_totals.choices = ["rent","heat","phone"]
----
-code: |
-  house_expenses_paid_by_other.name = house_expenses_totals.name
----
-id: expenses
-generic object: ALExpenseList
-question: Do you have any ${ x.name } expenses?
-fields:
-  - Do you have any ${ x.name } expenses?: x.there_are_any
-    datatype: yesnoradio
----
-# TODO: Somehow exclude items that the person has already selected
-id: expense information
-generic object: ALExpenseList
-question: |
-  What is one ${ x.name } expense?
-fields: 
-  - Type of expense: x[i].source
-    code: |
-      x.choices
-  - Other (explain): x[i].source
-    show if:
-      variable: x[i].source
-      is: other
-  - Amount: x[i].value
-    datatype: currency
-    min: 0
-    validation messages:
-      min: The amount must be more than ${ currency(0) }
-  - How often do you pay this amount?: x[i].times_per_year
-    default: 12
-    code: |
-      times_per_year_for_expenses
-  - Does anyone else help pay for this expense? This can include your employer: x[i].portion_is_paid_by_other
-    datatype: yesnoradio
----
-id: expense paid by other
-generic object: ALExpenseList
-continue button field: x[i].get_other_value
-question: How much do other people help pay for ${ x.name } ${ times_per_year(times_per_year_list, x[i].times_per_year) }?
-fields:
-  - Amount: x[i].value
-    datatype: currency
-    min: 0
-    max: ${ x[i].max }
-    validation messages:
-      min: The amount must be more than ${ currency(0) }
-      max: The amount must be equal to or less than ${ currency( x[i].max ) }
----
-id: are there more expenses
-generic object: ALExpenseList
-question: Do you have other ${ x.name } expenses?
-subquestion: |
-  % if x.number_gathered() > 0:
-  You've already told us about **${ comma_and_list(x.sources()) }**.
-  % endif
-fields:
-  - Is there another expense?: x.there_is_another
-    datatype: yesnoradio
----
-id: expense summary
-continue button field: expense_summary
-question: |
-  Your expenses
-subquestion: |
-  # Household expenses
-  
-  % if house_expenses_totals.there_are_any:
-  Total of each household expense:
-  
-  * Rent: ${ currency(house_expenses_totals.total(source=["rent"], times_per_year=12)) }
-  * Heat: ${ currency(house_expenses_totals.total(source=["heat"], times_per_year=12)) }
-  * Phone: ${ currency(house_expenses_totals.total(source=["phone"], times_per_year=12)) }
-  
-  **Total:** ${ currency(house_expenses_totals.total(times_per_year=12)) }
-  
-  Amount of each household expense that someone else pays:
-  
-  * Rent: ${ house_expenses_paid_by_other.total(source=["rent"], times_per_year=12) }
-  * Heat: ${ house_expenses_paid_by_other.total(source=["heat"], times_per_year=12) }
-  * Phone: ${ house_expenses_paid_by_other.total(source=["phone"], times_per_year=12) }
-  
-  **Total others pay:** ${ house_expenses_paid_by_other.total(times_per_year=12) }
-  
-  Amount of each household expense that you pay:
-  
-  * Rent: ${ house_expenses_totals.total(source=["rent"], times_per_year=12) - house_expenses_paid_by_other.total(source=["rent"], times_per_year=12) }
-  * Heat: ${ house_expenses_totals.total(source=["heat"], times_per_year=12) - house_expenses_paid_by_other.total(source=["heat"], times_per_year=12) }
-  * Phone: ${ house_expenses_totals.total(source=["phone"], times_per_year=12) - house_expenses_paid_by_other.total(source=["phone"], times_per_year=12) }
-  
-  **Total you pay:** ${ house_expenses_totals.total(times_per_year=12) - house_expenses_paid_by_other.total(times_per_year=12) }
   
   % else:
   You have no household expenses.
