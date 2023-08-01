@@ -13,7 +13,7 @@ objects:
 id: interview order
 mandatory: True
 code: |
-  house_expenses_table.totals.gather()
+  house_expenses_table.totals.gathered
   generic_expense_summary
   
   if employed:
@@ -143,6 +143,36 @@ objects:
   house_expenses_table.totals: ALExpenseList.using(complete_attribute="complete")
   house_expenses_table.paid_by_other: ALExpenseList.using(auto_gather=False,gathered=True)
 ---
+# This complexity avoids making a separate module which may be even harder to maintain
+generic object: DAObject
+code: |
+  x.totals.moved
+  for index, exp in enumerate(x.totals.elements):
+    exp.value
+    x.paid_by_other[ index ].source = x.totals[ index ].source
+    x.paid_by_other[ index ].times_per_year = x.totals[ index ].times_per_year
+    if x.totals[ index ].portion_is_paid_by_other:
+      x.paid_by_other[ index ].value
+    else:
+      x.paid_by_other[ index ].value = '0'
+  
+  # Make sure every source has a value to show and edit later
+  for source in x.choices:
+    if source not in x.totals.sources():
+      sub_total = x.totals.appendObject()
+      sub_total.source = source
+      sub_total.times_per_year = 12
+      sub_total.value = '0'
+      
+  x.totals.revisit = True
+  x.totals.gathered = True
+---
+generic object: DAObject
+code: |
+  x.totals.selected_types
+  x.totals.move_checks_to_list(selected_terms=expense_terms)
+  x.totals.moved = True
+---
 code: |
   house_expenses_table.name = "household"
   # We can make the two below translatable if we do it right
@@ -157,40 +187,21 @@ code: |
     "phone": "phone expense",
   }
 ---
-# This complexity avoids making a separate module which may be even harder to maintain
+id: which expenses
 generic object: DAObject
-code: |
-  x.totals[i].source
-  x.paid_by_other[i].source = x.totals[i].source
-  # We get foo_expenses_table.paid_by_other values at the same time
-  x.paid_by_other[i].source = x.totals[i].source
-  x.paid_by_other[i].times_per_year = x.totals[i].times_per_year
-  if x.totals[i].portion_is_paid_by_other:
-    x.paid_by_other[i].value
-  else:
-    x.paid_by_other[i].value = '0'
-  if len(x.choices) <= len(x.totals.sources()):
-    x.totals.there_is_another = False
-  x.totals[i].complete = True
----
-id: expenses
-generic object: DAObject
-question: Do you have any ${ x.name } expenses?
+question: |
+  What expenses do you have for your ${ x.name }?
 fields:
-  - Do you have any ${ x.name } expenses?: x.totals.there_are_any
-    datatype: yesnoradio
+  - no label: x.totals.selected_types
+    datatype: checkboxes
+    code: |
+      x.choices
 ---
-# TODO: For choices, somehow exclude items that the person has already selected
 id: expense information
 generic object: DAObject
-# This title should depend on whether they've already given some expenses
 question: |
-  What is one ${ x.name } expense?
-fields: 
-  # Change this to a checklist
-  - Type of expense: x.totals[i].source
-    code: |
-      [ choice for choice in x.choices if choice[0] not in x.totals.sources() ]
+  What is your expense for ${ x.totals[i].source }?
+fields:
   - Amount: x.totals[i].value
     datatype: currency
     min: 0
@@ -215,23 +226,6 @@ fields:
     validation messages:
       min: The amount must be more than ${ currency(0) }
       max: The amount must be equal to or less than ${ currency( x.totals[i].value )}
----
-id: are there more expenses
-generic object: DAObject
-question: Do you have other ${ x.name } expenses?
-subquestion: |
-  % if x.totals.number_gathered() > 0:
-  List the already gathered items by their object key:
-  
-  You've already told us about **${ comma_and_list(x.totals.sources()) }**.
-  
-  Alternatively, if you want something more than the object key, which can also make them translatable if we do it right:
-  
-  You've already told us about **${ comma_and_list([house_expenses_labels_map[key] for key in x.totals.sources()]) }**.
-  % endif
-fields:
-  - Is there another expense?: x.totals.there_is_another
-    datatype: yesnoradio
 ---
 id: expense summary
 continue button field: generic_expense_summary
