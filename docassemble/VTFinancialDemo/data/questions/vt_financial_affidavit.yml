@@ -13,7 +13,6 @@ objects:
 id: interview order
 mandatory: True
 code: |
-  #house_expenses_table.totals.gather()
   house_expenses_table.totals.gathered
   generic_expense_summary
   
