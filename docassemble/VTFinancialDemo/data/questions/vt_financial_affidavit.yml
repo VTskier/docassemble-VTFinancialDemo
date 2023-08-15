@@ -1,3 +1,7 @@
+comment: |
+  K will make a draft seasonal job screen to get that discussion going
+  We need to work on other deductions
+  
 ---
 include:
   - docassemble.ALToolbox:al_income.yml
@@ -9,6 +13,8 @@ objects:
 ---
 objects:
   - jobs[i].employer_paid_expenses: ALIncomeList
+  # other_deductions or deductions? I think `other` is necessary to keep the original deductions separate because this still won't have categories.
+  - jobs[i].other_deductions: ALExpenseList
 ---
 id: interview order
 mandatory: True
@@ -28,6 +34,44 @@ code: |
     other_incomes.gathered
   
   improved_final_screen
+---
+#Redoing this AL screen to ask about kind of job (ft,pt AND seasonal)
+
+
+id: itemized job period A
+generic object: ALItemizedJob
+question: |
+  #What are the hours for the "${ x.source }" job?
+  What kind of job do you have?
+fields:
+  - Full-time job: x.is_full_time
+  - Part time job: x.is_part_time
+  - Seasonal job: x.is_seasonal
+---  
+id: itemized job period seasonal
+generic object: ALItemizedJob
+question: |
+  At this job, how much did you make each of these prior months?
+  
+---  
+id: itemized job period pt ft
+generic object: ALItemizedJob
+question: |
+  How do you get paid?
+fields:
+  - Hourly or salary?: x.is_hourly
+    input type: radio
+    choices:
+      - Hourly: True
+      - Salary: False
+  - How often does ${ x.employer} pay?: x.times_per_year
+    input type: radio
+    code: |
+      times_per_year_list
+    datatype: integer
+  - How many hours are worked during that time?: x.hours_per_period
+    input type: number
+    show if: x.is_hourly
 ---
 generic object: ALItemizedJob
 code: |
