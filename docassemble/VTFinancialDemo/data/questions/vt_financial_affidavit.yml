@@ -1,5 +1,6 @@
 comment: |
-  K will make a draft seasonal job screen to get that discussion going
+  K made some simple initial screens so user is asked if they have a job, if they have ft, pt or seasonal jobs, and to collect their calendar month income if they are seasonal ---- very rough drafts to get the discussion going!
+  
   We need to work on other deductions
   
 ---
@@ -19,10 +20,13 @@ objects:
 id: interview order
 mandatory: True
 code: |
-  house_expenses_table.totals.gather()
-  generic_expense_summary
-  
+  employed
   if employed:
+    job_period
+    if job_period["is_seasonal"]:
+      seasonal_month_1
+      #For seasonal workers, how do we collect the employer name, tips, employer-paid expenses, etc?
+
     jobs.gather()
     #need to add x.which_tips_commissions
     review_jobs
@@ -32,27 +36,102 @@ code: |
   if other_incomes.selected_types.any_true():
     other_incomes.there_are_any = True
     other_incomes.gathered
+
+  house_expenses_table.totals.gather()
+  generic_expense_summary
   
   improved_final_screen
+  
 ---
-#Redoing this AL screen to ask about kind of job (ft,pt AND seasonal)
+id: job review
+question: |
+  Are you employed?
+fields:
+  - Are you employed?: employed
+    datatype: yesnoradio
+---
+id: why unemployed
+question: |
+  Tell us more
+fields:
+  - I am currently unemployed because:: why_unemployed
+    maxlength: 30
+---
+#Redoing this ALIncome module screen to ask about kind of job (ft,pt AND seasonal)
 
-
-id: itemized job period A
+id: itemized job period
 generic object: ALItemizedJob
 question: |
-  #What are the hours for the "${ x.source }" job?
-  What kind of job do you have?
+  What kind of job(s) do you have?
 fields:
-  - Full-time job: x.is_full_time
-  - Part time job: x.is_part_time
-  - Seasonal job: x.is_seasonal
----  
+    - Type of job: job_period
+      datatype: checkboxes
+      choices:
+        - Full-time job(s): is_full_time
+        - Part-time job(s): is_part_time
+        - Seasonal job(s): is_seasonal
+      none of the above: False
+      maxlength: 1
+--- 
+#I changed the variable names in the question block above so I need to reset them here so the rest of the interview will run.
+code: |
+  if job_period["is_full_time"]:
+    x.is_full_time = job_period["is_full_time"]
+  if job_period["is_part_time"]:
+    x.is_full_time = job_period["is_part_time"]  
+---
 id: itemized job period seasonal
 generic object: ALItemizedJob
 question: |
-  At this job, how much did you make each of these prior months?
+  As a seasonal worker, how much did you make each of the last 12 months?
+#Figure out how to show the past 12 months from the current date?
+fields:
+  - January: seasonal_month_1
+    datatype: currency
+    required: False
+  - February: seasonal_month_2
+    datatype: currency
+    required: False
+  - March: seasonal_month_3
+    datatype: currency
+    required: False
+  - April: seasonal_month_4
+    datatype: currency
+    required: False
+  - May: seasonal_month_5
+    datatype: currency
+    required: False
+  - June: seasonal_month_6
+    datatype: currency
+    required: False
+  - July: seasonal_month_7
+    datatype: currency
+    required: False
+  - August: seasonal_month_8
+    datatype: currency
+    required: False
+  - September: seasonal_month_9
+    datatype: currency
+    required: False
+  - October: seasonal_month_10
+    datatype: currency
+    required: False
+  - November: seasonal_month_11
+    datatype: currency
+    required: False
+  - December: seasonal_month_12
+    datatype: currency
+    required: False
+  - How much was taken out of your pay each month for things like federal taxes, child support, health insurance?: seasonal_monthly_deductions
+    datatype: currency
+    required: False
   
+  
+  
+  
+  
+#I didn't touch the code we had below except to change the id name below to id: itemized job period pt ft, and move up and edit id: why unemployed
+#####################################################################################  
 ---  
 id: itemized job period pt ft
 generic object: ALItemizedJob
@@ -152,15 +231,6 @@ fields:
       times_per_year_list
   - Amount of income: x[i].value
     datatype: currency
----
-id: job review
-question: |
-  Are you employed?
-fields:
-  - Are you employed?: employed
-    datatype: yesnoradio
-  - I am currently unemployed because: why_unemployed
-    hide if: employed
 ---
 #Brainstorm gathering code for generic tip_commissions - how much and how often   
 ---
@@ -351,6 +421,6 @@ subquestion: |
   % endif
 #  Tips, commissions, bonuses, royalties: ${ currency(jobs.total(source=["tips_commissions"],times_per_year=12)) }
   
-#  Self-employment income: Attach Sched C or result from page 11 - gross monthly
+#  Self-employment income: Attach Sched C or result from page 11 - gross monthly. Use K's self-empl code
   
 ---
