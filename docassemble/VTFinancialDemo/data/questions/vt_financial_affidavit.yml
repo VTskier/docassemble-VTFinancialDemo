@@ -22,10 +22,13 @@ mandatory: True
 code: |
   employed
   if employed:
-    job_period
-    if job_period["is_seasonal"]:
-      seasonal_month_1
-      #For seasonal workers, how do we collect the employer name, tips, employer-paid expenses, etc?
+    self_employed_or_not
+    if self_employed_or_not["is_not_self_employed"]:
+      employer1_name_first
+      job_period
+      if job_period["is_seasonal"]:
+        seasonal_month_1
+        #For seasonal workers, how do we collect the employer name, tips, employer-paid expenses, etc?
 
     jobs.gather()
     #need to add x.which_tips_commissions
@@ -57,12 +60,35 @@ fields:
   - I am currently unemployed because:: why_unemployed
     maxlength: 30
 ---
+id: start to gather employers
+generic object: ALItemizedJob
+question: |
+  Who have you worked for during the last 12 months? Let's make a list of your employers.
+fields:
+    - no label: self_employed_or_not
+      datatype: checkboxes
+      choices:
+        - I am self-employed: is_self_employed
+        - I am not self-employed: is_not_self_employed
+      none of the above: False
+      maxlength: 1
+---
+id: gather basic employer info
+generic object: ALItemizedJob
+question: |
+    Tell us about your first employer
+fields:
+    - Name of employer: employer1_name_first
+    - Address of employer: employer1_address
+    - Is there another employer?: another_employer
+      datatype: yesnoradio
+---
 #Redoing this ALIncome module screen to ask about kind of job (ft,pt AND seasonal)
 
 id: itemized job period
 generic object: ALItemizedJob
 question: |
-  What kind of job(s) do you have?
+    What kind of job do you have with ${ employer1_name_first }?
 fields:
     - Type of job: job_period
       datatype: checkboxes
@@ -75,6 +101,8 @@ fields:
 --- 
 #I changed the variable names in the question block above so I need to reset them here so the rest of the interview will run.
 code: |
+  if self_employed_or_not["is_self_employed"]:
+    x.is_self_employed = self_employed_or_not["is_self_employed"]
   if job_period["is_full_time"]:
     x.is_full_time = job_period["is_full_time"]
   if job_period["is_part_time"]:
