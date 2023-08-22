@@ -1,5 +1,7 @@
 comment: |
-  K made some simple initial screens so user is asked if they have a job, if they have ft, pt or seasonal jobs, and to collect their calendar month income if they are seasonal ---- very rough drafts to get the discussion going!
+  This version starts by asking who they work for. Then asks if it is pt, ft or seasonal work for each employer.
+  
+  K made some simple initial screens, including collecting their calendar month income if they are seasonal ---- very rough drafts to get the discussion going!
   
   We need to work on other deductions
   
@@ -20,6 +22,7 @@ objects:
 id: interview order
 mandatory: True
 code: |
+  employment_types
   employed
   if employed:
     self_employed_or_not
@@ -46,12 +49,28 @@ code: |
   improved_final_screen
   
 ---
-id: job review
+id: work
 question: |
-  Are you employed?
+  Do you work?
 fields:
-  - Are you employed?: employed
-    datatype: yesnoradio
+  - What kinds of work do you do? (Pick all that apply): employment_types
+    datatype: checkboxes
+    choices:
+      - I am self-employed: self
+      - I have employers: other_employer
+      - I am a home maker/caretaker: homemaker
+    none of the above: I am unemployed
+  - Why are you unemployed: why_unemployed
+    show if: 
+      variable: employment_types
+      is: null
+---
+#id: job review
+#question: |
+#  Are you employed?
+#fields:
+#  - Are you employed?: employed
+#    datatype: yesnoradio
 ---
 id: why unemployed
 question: |
@@ -60,18 +79,19 @@ fields:
   - I am currently unemployed because:: why_unemployed
     maxlength: 30
 ---
-id: start to gather employers
-generic object: ALItemizedJob
-question: |
-  Who have you worked for during the last 12 months? Let's make a list of your employers.
-fields:
-    - no label: self_employed_or_not
-      datatype: checkboxes
-      choices:
-        - I am self-employed: is_self_employed
-        - I am not self-employed: is_not_self_employed
-      none of the above: False
-      maxlength: 1
+#id: start to gather employers
+#generic object: ALItemizedJob
+#question: |
+#  Who have you worked for during the last 12 months? Let's make a list of your employers.
+#fields:
+#    - no label: self_employed_or_not
+#      datatype: checkboxes
+#      choices:
+#        - I am self-employed: is_self_employed
+#        - I am not self-employed: is_not_self_employed
+#        - I am self-employed (making more than $x00 a year in self-employment) AND have other employer(s): is_both_employed
+#      none of the above: False
+#      maxlength: 1
 ---
 id: gather basic employer info
 generic object: ALItemizedJob
@@ -80,7 +100,7 @@ question: |
 fields:
     - Name of employer: employer1_name_first
     - Address of employer: employer1_address
-    - Is there another employer?: another_employer
+    - Did you have another employer in the last 12 months?: another_employer
       datatype: yesnoradio
 ---
 #Redoing this ALIncome module screen to ask about kind of job (ft,pt AND seasonal)
@@ -88,16 +108,13 @@ fields:
 id: itemized job period
 generic object: ALItemizedJob
 question: |
-    What kind of job do you have with ${ employer1_name_first }?
+    What kind of job is job title xxxxxx?
 fields:
     - Type of job: job_period
-      datatype: checkboxes
       choices:
-        - Full-time job(s): is_full_time
-        - Part-time job(s): is_part_time
-        - Seasonal job(s): is_seasonal
-      none of the above: False
-      maxlength: 1
+        - Full-time job: is_full_time
+        - Part-time job: is_part_time
+        - Seasonal job: is_seasonal
 --- 
 #I changed the variable names in the question block above so I need to reset them here so the rest of the interview will run.
 code: |
@@ -111,7 +128,7 @@ code: |
 id: itemized job period seasonal
 generic object: ALItemizedJob
 question: |
-  As a seasonal worker, how much did you make each of the last 12 months?
+  As a seasonal worker as xxxxxjob titlexxxxx at ${ employer1_name_first }, how much did you make each of the last 12 months?
 #Figure out how to show the past 12 months from the current date?
 fields:
   - January: seasonal_month_1
