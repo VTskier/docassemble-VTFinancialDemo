@@ -1,3 +1,5 @@
+comment: |
+  Add new deductions to the list of possible paycheck deductions, which we need asked. See id: to add.
 ---
 include:
   - docassemble.ALToolbox:al_income.yml
@@ -9,6 +11,7 @@ objects:
 ---
 objects:
   - jobs[i].employer_paid_expenses: ALIncomeList
+  - jobs[i].other_deductions: ALExpenseList
 ---
 id: interview order
 mandatory: True
@@ -42,10 +45,92 @@ code: |
     x.to_add["part time"].is_hourly = x.is_hourly
   else:
     x.to_add["full time"].is_hourly = x.is_hourly
-  x.to_add.gather()
-  x.to_subtract.gather()
+  x.incomes
+  x.deductions
+  x.to_add.there_is_another = False
+  x.to_subtract.there_is_another = False
+  x.other_deductions.gather()
   x.employer_paid_expenses.gather()
   x.complete = True
+---
+id: VT itemized job income
+generic object: ALItemizedJob
+question: |
+    Enter income from your paystub for your job as a ${ x.source }
+fields:
+    - label: |
+        % if x.is_hourly:
+        What is your hourly pay for this job?
+        % else:
+        What are your wages for this job?
+        % endif
+      field: x.to_add['full time'].value
+      datatype: currency
+      show if:
+        code: x.is_part_time is False
+    - label: |
+        % if x.is_hourly:
+        What is your hourly pay for this job?
+        % else:
+        What are your wages for this job?
+        % endif
+      field: x.to_add['part time'].value
+      datatype: currency
+      show if:
+        code: x.is_part_time is True
+continue button field: x.incomes
+---
+id: to add
+comment: |
+  #ADD THESE
+  The numbers correspond to where the values would show up on the Vermont form 813A -- in column "Amount paid by me"
+  #19. Life Insurance
+  #20. Disability Insurance
+  #22. Dental/Vision
+  #33. Charitable Contributions
+  #35.Union Dues
+  #36. Monthly Contribution to Savings
+  #37.Monthly Contribution to Retirement Funds (401K, IRA, etc.)
+  #40. Court Ordered Child Support you pay for children of another relationship.
+  #41. Court Ordered Spousal Maintenance (Alimony) you pay
+  #42. Misc: Bus pass/parking pass/transportation/commuting
+  #42. Misc: HSA / HRA / FSA-health / FSA-dependent care
+  #45. FICA
+  #46. MEDICARE
+  #47. STATE TAX WITHHELD
+  #48. OTHER TAXES WITHHELD/PAID
+---
+id: VT itemized job deductions
+generic object: ALItemizedJob
+question: |
+    Enter deductions from your paystub for your job as a ${ x.source }
+
+
+fields:
+    - Out of this paycheck, how much is taken out for federal tax?: x.to_subtract['federal_taxes'].value
+      datatype: currency
+      required: False
+    - Out of this paycheck, how much is taken out for health insurance -- if anything?: x.to_subtract['insurance'].value
+      datatype: currency
+      required: False
+    - Do you have other deductions from this job?: x.other_deductions.there_are_any
+      datatype: yesnoradio
+continue button field: x.deductions
+---
+id: other deductions
+generic object: ALItemizedJob
+question: |
+  Tell us about this deduction xxxx
+fields:
+  - What is the source of this deduction?: x.other_deductions[0].source
+  - Amount: x.other_deductions[0].value
+    datatype: currency
+  - How often do you pay this amount?: x.other_deductions[0].times_per_year
+    default: 12
+    code: |
+      times_per_year_for_expenses
+  - Do you have other deductions from this job?: x.other_deductions.there_is_another
+    datatype: yesnoradio
 ---
 id: does employer pay expenses
 question: Employer paid expenses for for your ${ jobs[i].source } job
