@@ -3,6 +3,7 @@ comment: |
   
   K made some simple initial screens, including collecting their calendar month income if they are seasonal ---- very rough drafts.
 
+  Error TypeError: string indices must be integers In line: if job_period[‘is_seasonal’]
   
 ---
 include:
@@ -26,7 +27,7 @@ code: |
   if employment_types['unemployed']:
     why_unemployed
     improved_final_screen    
- 
+
   if employment_types['self']:
     improved_final_screen
     
@@ -40,18 +41,17 @@ code: |
       seasonal_month_1
       improved_final_screen
       #For seasonal workers, how do we collect the employer name, tips, employer-paid expenses, etc?
-    else:
-      jobs.gather()
-      #need to add x.which_tips_commissions
-      improved_final_screen
+    jobs.gather()
+    #need to add x.which_tips_commissions
+    improved_final_screen
 
     
-#    if other_incomes.selected_types.any_true():
-#      other_incomes.there_are_any = True
-#      other_incomes.gathered
-#
-#      house_expenses_table.totals.gather()
-#      generic_expense_summary
+    #if other_incomes.selected_types.any_true():
+      #other_incomes.there_are_any = True
+      #other_incomes.gathered
+
+      #house_expenses_table.totals.gather()
+      #generic_expense_summary
  
 
 
@@ -64,7 +64,7 @@ fields:
     datatype: checkboxes
     choices:
       - I work for an employer: employers
-      - I am self employed:  self
+      - I am self-employed:  self
       - I am a homemaker/caretaker: caretaker
       - I am not employed: unemployed
     none of the above: False
@@ -111,7 +111,7 @@ fields:
 id: itemized job period
 generic object: ALItemizedJob
 question: |
-    What kind of job is job title xxxxxx?
+    What kind of job do you have with ${ employer1_name_first }?
 fields:
     - Type of job: job_period
       choices:
@@ -129,7 +129,7 @@ code: |
 id: itemized job period seasonal
 generic object: ALItemizedJob
 question: |
-  As a seasonal worker as xxxxxjob titlexxxxx at ${ employer1_name_first }, how much did you make each of the last 12 months?
+  As a seasonal worker at ${ employer1_name_first }, how much did you make each of the last 12 months?
 #Figure out how to show the past 12 months from the current date?
 fields:
   - January: seasonal_month_1
@@ -172,7 +172,50 @@ fields:
     datatype: currency
     required: False
   
+---
+#event: improved_final_screen
+continue button field: improved_final_screen
+question: Summary of your jobs
+subquestion: |
+  % if employment_types['self']:
+  I am self-employed. I will do the self-employed worksheet to figure out my net income.
+  % endif
   
+  % if employment_types['caretaker']:
+  I am a homemaker/caretaker.
+  % endif
+    
+  % if employment_types['unemployed']:
+  I am unemployed because ${ why_unemployed }.
+  % endif
+    
+  % if job_period['is_seasonal']:
+  I work in a seasonal job. My employer is ${ employer1_name_first }.
+  % endif
+  
+  % if job_period['is_full_time']:
+  My employer name and address
+  ${ jobs[0].employer_name_address_phone() }
+  % endif
+  
+  % if job_period['is_part_time']:
+  My employer name and address
+  ${ jobs[0].employer_name_address_phone() }
+  % endif
+  
+    #Second employer
+  
+    #I have included overtime: ${ True }
+  
+    #My monthly gross income excluding self-employed jobs (Q1. Salary or wages): ${ currency(jobs.total(source=["full time","part time"],times_per_year=12)) }
+
+    #My employer paid expenses add up to: ${ currency(sum([ expense.total(times_per_year=12) for expense in [ job.employer_paid_expenses for job in jobs ] ])) }
+
+
+  
+#  Tips, commissions, bonuses, royalties: ${ currency(jobs.total(source=["tips_commissions"],times_per_year=12)) }
+  
+---  
   
   
   
@@ -440,43 +483,4 @@ subquestion: |
 
   ${ jobs.add_action() }
 field: review_jobs
----
-#event: improved_final_screen
-continue button field: improved_final_screen
-question: Summary of your jobs
-subquestion: |
-  % if employment_types['self']:
-  I am self-employed. I will do the self-employed worksheet to figure out my net income.
-  % endif
-  
-  % if employment_types['caretaker']:
-  I am a homemaker/caretaker.
-  % endif
-    
-  % if employment_types['unemployed']:
-  I am unemployed because ${ why_unemployed }.
-  % endif
-    
-  % if job_period['is_seasonal']:
-    I work in a seasonal job.
-    Employer name is 
-  % else:
-    Employer name and address
-    ${ jobs[0].employer_name_address_phone() }
-    
-    #Second employer
-  
-    #I have included overtime: ${ True }
-  
-    #My monthly gross income excluding self-employed jobs (Q1. Salary or wages): ${ currency(jobs.total(source=["full time","part time"],times_per_year=12)) }
-
-    #My employer paid expenses add up to: ${ currency(sum([ expense.total(times_per_year=12) for expense in [ job.employer_paid_expenses for job in jobs ] ])) }
-
-  % endif
-
-  
-#  Tips, commissions, bonuses, royalties: ${ currency(jobs.total(source=["tips_commissions"],times_per_year=12)) }
-  
-#  Self-employment income: Attach Sched C or result from page 11 - gross monthly. Use K's self-empl code
-  
 ---
