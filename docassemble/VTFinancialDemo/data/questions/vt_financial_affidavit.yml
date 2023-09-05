@@ -1,9 +1,5 @@
-comment: |
-  Add new deductions to the list of possible paycheck deductions, which we need asked. See id: to add.
-  For seasonal work, ask do you have any paycheck deductions. That let's them skip lots of questions if they don't. Ask Jack about this.
-  For seasonal work, tell them to leave blank or put a zero.
-  For two seasonal jobs, collect those monthly amounts seperately -- one job at a time.
-  For seasonal work, list the last 12 months from the date user is doing the interview.
+#comment: |
+#  Add new deductions to the list of possible paycheck deductions, which we need asked. See list in code below.
 ---
 include:
   - docassemble.ALToolbox:al_income.yml
@@ -84,25 +80,7 @@ fields:
         code: x.is_part_time is True
 continue button field: x.incomes
 ---
-id: to add
-comment: |
-  #ADD THESE
-  The numbers correspond to where the values would show up on the Vermont form 813A -- in column "Amount paid by me"
-  #19. Life Insurance
-  #20. Disability Insurance
-  #22. Dental/Vision
-  #33. Charitable Contributions
-  #35.Union Dues
-  #36. Monthly Contribution to Savings
-  #37.Monthly Contribution to Retirement Funds (401K, IRA, etc.)
-  #40. Court Ordered Child Support you pay for children of another relationship.
-  #41. Court Ordered Spousal Maintenance (Alimony) you pay
-  #42. Misc: Bus pass/parking pass/transportation/commuting
-  #42. Misc: HSA / HRA / FSA-health / FSA-dependent care
-  #45. FICA
-  #46. MEDICARE
-  #47. STATE TAX WITHHELD
-  #48. OTHER TAXES WITHHELD/PAID
+
 ---
 id: VT itemized job deductions
 generic object: ALItemizedJob
@@ -310,14 +288,11 @@ generic object: DAObject
 question: Do you have other ${ x.name } expenses?
 subquestion: |
   % if x.totals.number_gathered() > 0:
-  List the already gathered items by their object key:
-  
-  You've already told us about **${ comma_and_list(x.totals.sources()) }**.
-  
-  Alternatively, if you want something more than the object key, which can also make them translatable if we do it right:
   
   You've already told us about **${ comma_and_list([house_expenses_labels_map[key] for key in x.totals.sources()]) }**.
   % endif
+#Use code above so you can translate the labels into other languages.
+
 fields:
   - Is there another expense?: x.totals.there_is_another
     datatype: yesnoradio
