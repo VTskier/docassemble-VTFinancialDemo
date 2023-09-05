@@ -3,7 +3,7 @@ comment: |
   
   K made some simple initial screens, including collecting their calendar month income if they are seasonal ---- very rough drafts.
 
-  Error TypeError: string indices must be integers In line: if job_period[‘is_seasonal’]
+
   
 ---
 include:
@@ -37,13 +37,14 @@ code: |
   if employment_types['employers']:
     employer1_name_first
     job_period    
-    if job_period['is_seasonal']:
+    if job_period == "is_seasonal":
       seasonal_month_1
       improved_final_screen
       #For seasonal workers, how do we collect the employer name, tips, employer-paid expenses, etc?
-    jobs.gather()
-    #need to add x.which_tips_commissions
-    improved_final_screen
+    else:
+      jobs.gather()
+      #need to add x.which_tips_commissions
+      improved_final_screen
 
     
     #if other_incomes.selected_types.any_true():
@@ -173,8 +174,8 @@ fields:
     required: False
   
 ---
-#event: improved_final_screen
-continue button field: improved_final_screen
+event: improved_final_screen
+#continue button field: improved_final_screen
 question: Summary of your jobs
 subquestion: |
   % if employment_types['self']:
@@ -189,16 +190,16 @@ subquestion: |
   I am unemployed because ${ why_unemployed }.
   % endif
     
-  % if job_period['is_seasonal']:
+  % if job_period == "is_seasonal":
   I work in a seasonal job. My employer is ${ employer1_name_first }.
   % endif
   
-  % if job_period['is_full_time']:
+  % if job_period == "is_full_time":
   My employer name and address
   ${ jobs[0].employer_name_address_phone() }
   % endif
   
-  % if job_period['is_part_time']:
+  % if job_period == "is_part_time":
   My employer name and address
   ${ jobs[0].employer_name_address_phone() }
   % endif
