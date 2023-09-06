@@ -1,8 +1,15 @@
 comment: |
   This is the seasonal job branch. Work in progress. Use this one.
   
-  K made some simple initial screens, including collecting their calendar month income if they are seasonal ---- very rough drafts.
+  We made some simple initial screens to be used: id: job review and id: why unemployed and id: itemized job period and id: itemized job period seasonal
 
+  For seasonal work, ask do you have any paycheck deductions. That let's them skip lots of questions if they don't. Ask J. about this.
+
+  For seasonal work, tell them to leave blank or put a zero.
+
+  For two seasonal jobs, collect those monthly amounts seperately -- one job at a time.
+
+  For seasonal work, list the last 12 months from the date user is doing the interview.
 
   
 ---
@@ -35,7 +42,7 @@ code: |
     improved_final_screen
     
   if employment_types['employers']:
-    employer1_name_first
+    #employer1_name_first
     job_period    
     if job_period == "is_seasonal":
       seasonal_month_1
@@ -54,8 +61,6 @@ code: |
       #house_expenses_table.totals.gather()
       #generic_expense_summary
  
-
-
 ---
 id: job review
 question: |
@@ -65,8 +70,8 @@ fields:
     datatype: checkboxes
     choices:
       - I work for an employer: employers
-      - I am self-employed:  self
-      - I am a homemaker/caretaker: caretaker
+      - I am self-employed. (Including things like selling items on Etsy, making and selling maple syrup, or doing food deliveries -- but don't select this if you get rental income as a landlord. That will be collected separately.): self
+      - I am a homemaker or unpaid caretaker: caretaker
       - I am not employed: unemployed
     none of the above: False
 #    none of the above: |
@@ -97,28 +102,28 @@ fields:
 #      none of the above: False
 #      maxlength: 1
 ---
-id: gather basic employer info
-generic object: ALItemizedJob
-question: |
-    Tell us about your first employer
-fields:
-    - Name of employer: employer1_name_first
-    - Address of employer: employer1_address
-    - Did you have another employer in the last 12 months?: another_employer
-      datatype: yesnoradio
+#id: gather basic employer info
+#generic object: ALItemizedJob
+#question: |
+#    Tell us about your first employer
+#fields:
+#    - Name of employer: employer1_name_first
+#    - Address of employer: employer1_address
+#    - Did you have another employer in the last 12 months?: another_employer
+#      datatype: yesnoradio
 ---
 #Redoing this ALIncome module screen to ask about kind of job (ft,pt AND seasonal)
 
 id: itemized job period
 generic object: ALItemizedJob
 question: |
-    What kind of job do you have with ${ employer1_name_first }?
+    What kind of job do you have?
 fields:
     - Type of job: job_period
       choices:
         - Full-time job: is_full_time
         - Part-time job: is_part_time
-        - Seasonal job: is_seasonal
+        - Seasonal job -- Lasting only part of the year: is_seasonal
 --- 
 #I changed the variable names in the question block above so I need to reset them here so the rest of the interview will run.
 code: |
@@ -130,46 +135,61 @@ code: |
 id: itemized job period seasonal
 generic object: ALItemizedJob
 question: |
-  As a seasonal worker at ${ employer1_name_first }, how much did you make each of the last 12 months?
+  Seasonal income
+subquestion: |
+  Along with this completed form, you will need to attach copies of your 4 most recent paystubs in the last year. To provide the information below, you will want to view all your paystubs for the last 12 months, if possible. With this information, we will figure your average monthly income to report on the financial affidavit.
+  
+    **As a seasonal worker at EMPLOYER NAME, how much did you make each of the last 12 months?** 
+    
+    - Enter your **gross income** -- before taxes and other deductions.
+    
+    - Leave fields blank as needed.
+  
+  
 #Figure out how to show the past 12 months from the current date?
 fields:
-  - January: seasonal_month_1
+  - "**January**": seasonal_month_1
     datatype: currency
     required: False
-  - February: seasonal_month_2
+  - During this month, how much was taken out for federal tax?: to_subtract1
     datatype: currency
     required: False
-  - March: seasonal_month_3
+  - During this month, how much was taken out for health insurance -- if anything?: to_subtract2
     datatype: currency
     required: False
-  - April: seasonal_month_4
+  - During this month, did you have other deductions from this job?: other_deductions_there_are_any
+    datatype: yesnoradio
+  - "**February**": seasonal_month_2
     datatype: currency
     required: False
-  - May: seasonal_month_5
+  - "**March**": seasonal_month_3
     datatype: currency
     required: False
-  - June: seasonal_month_6
+  - "**April**": seasonal_month_4
     datatype: currency
     required: False
-  - July: seasonal_month_7
+  - "**May**": seasonal_month_5
     datatype: currency
     required: False
-  - August: seasonal_month_8
+  - "**June**": seasonal_month_6
     datatype: currency
     required: False
-  - September: seasonal_month_9
+  - "**July**": seasonal_month_7
     datatype: currency
     required: False
-  - October: seasonal_month_10
+  - "**August**": seasonal_month_8
     datatype: currency
     required: False
-  - November: seasonal_month_11
+  - "**September**": seasonal_month_9
     datatype: currency
     required: False
-  - December: seasonal_month_12
+  - "**October**": seasonal_month_10
     datatype: currency
     required: False
-  - How much was taken out of your pay each month for things like federal taxes, child support, health insurance?: seasonal_monthly_deductions
+  - "**November**": seasonal_month_11
+    datatype: currency
+    required: False
+  - "**December**": seasonal_month_12
     datatype: currency
     required: False
   
@@ -191,7 +211,7 @@ subquestion: |
   % endif
     
   % if job_period == "is_seasonal":
-  I work in a seasonal job. My employer is ${ employer1_name_first }.
+  I work in a seasonal job.
   % endif
   
   % if job_period == "is_full_time":
