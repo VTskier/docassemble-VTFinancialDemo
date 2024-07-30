@@ -1,4 +1,23 @@
 ---
+variable name: other_incomes.terms_ordered
+data: !!omap
+  - unemployment income: "Unemployment benefits"
+  - child support income: "Child support"
+  - rental income: "Rental income"
+  - annuities income: "Annuity or trust income"
+  - retirement income: "Retirement/pension"
+  - workers comp income: "Workers comp or disability insurance"
+  - social security income: "Social Security benefits"
+  - veterans income: "Veterans benefits"
+  - interest income: "Interest or dividend income"
+  - gifts income: "Gifts or prize money (including lottery)"   
+  - alimony from OP income: "Spousal maintenance (from other party in this court action)"
+  - alimony from other income: "Spousal maintenance (from someone else)"  
+  - other: "Other (for example, capital gains on stocks)"
+---
+
+
+---
 include:
   - docassemble.ALToolbox:al_income.yml
   - docassemble.AssemblyLine:al_package.yml
